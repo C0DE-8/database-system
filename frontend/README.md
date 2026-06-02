@@ -12,14 +12,16 @@ npm run dev
 By default the frontend calls:
 
 ```bash
-http://localhost:4000
+https://api.dbms.copupbid.com/api
 ```
 
 To use a different backend URL, create `.env` in `frontend/`:
 
 ```bash
-VITE_API_URL=http://localhost:4000
+VITE_API_URL=https://api.dbms.copupbid.com/api
 ```
+
+`VITE_API_URL` should include `/api`. Socket.IO uses the same host without the `/api` suffix.
 
 ## Frontend API Files
 

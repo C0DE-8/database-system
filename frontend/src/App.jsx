@@ -12,6 +12,7 @@ import {
 } from './api/projects.routes'
 import { login } from './api/auth.routes'
 import { getLogs, getStatus, pingAllProjects } from './api/monitor.routes'
+import { API_ORIGIN } from './api/client'
 import './App.css'
 
 const emptyProject = {
@@ -118,7 +119,7 @@ function App() {
     queueMicrotask(() => {
       refresh()
     })
-    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:4000')
+    const socket = io(API_ORIGIN)
     socket.on('status', (statusRows) => {
       setProjects(mergeProjects(statusRows, projectDetailsRef.current))
     })
