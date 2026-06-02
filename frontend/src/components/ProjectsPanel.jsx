@@ -39,12 +39,26 @@ export function ProjectsPanel({
               <div>
                 <strong>{project.name}</strong>
                 <div>
-                  {project.siteId} · {project.enabled ? 'Enabled' : 'Disabled'}
+                  {project.enabled ? 'Enabled' : 'Disabled'}
                 </div>
               </div>
               <span className={`status ${project.connection.status}`}>
                 {project.connection.status}
               </span>
+            </div>
+            <div className="key-list">
+              <strong>Site ID</strong>
+              <div className="key-row">
+                <code>{project.siteId}</code>
+                <span>Project ID</span>
+                <button
+                  type="button"
+                  className="secondary compact"
+                  onClick={() => onCopy(project.siteId, 'Site ID')}
+                >
+                  Copy
+                </button>
+              </div>
             </div>
             <div className="key">
               <strong>Database</strong>
@@ -137,4 +151,3 @@ export function ProjectsPanel({
     </div>
   )
 }
-
