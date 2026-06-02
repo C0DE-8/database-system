@@ -7,7 +7,7 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 const { Server } = require("socket.io");
 
-const { config } = require("./src/config/config");
+const { config, isAllowedOrigin } = require("./src/config/config");
 const { authenticateAdmin } = require("./src/middleware/auth");
 const { createAuthRouter } = require("./src/routes/auth.routes");
 const { createProjectRouter } = require("./src/routes/projects.routes");
@@ -23,7 +23,11 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: config.corsOrigin,
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error(`CORS blocked origin: ${origin}`));
+    },
+    credentials: true,
   },
 });
 
@@ -37,10 +41,21 @@ const connectionManager = new ConnectionManager(
 
 app.use(
   cors({
-    origin: config.corsOrigin,
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error(`CORS blocked origin: ${origin}`));
+    },
     credentials: true,
   })
 );
+
+app.options("*", cors({
+  origin(origin, callback) {
+    if (isAllowedOrigin(origin)) return callback(null, true);
+    return callback(new Error(`CORS blocked origin: ${origin}`));
+  },
+  credentials: true,
+}));
 
 app.use(
   helmet({

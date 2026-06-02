@@ -9,6 +9,16 @@ const requiredSecret = (name, fallback) => {
 };
 
 const encryptionSecret = requiredSecret("ENCRYPTION_KEY", "dev-only-encryption-key-change-this");
+const defaultCorsOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://database-system-five.vercel.app"
+];
+
+const corsOrigins = (process.env.CORS_ORIGIN || defaultCorsOrigins.join(","))
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const config = {
   port: Number(process.env.PORT || 4001),
@@ -16,7 +26,7 @@ const config = {
   encryptionKey: crypto.createHash("sha256").update(encryptionSecret).digest(),
   adminEmail: process.env.ADMIN_EMAIL || "admin@example.com",
   adminPassword: process.env.ADMIN_PASSWORD || "change-me-now",
-  corsOrigin: process.env.CORS_ORIGIN || "*",
+  corsOrigins,
   metadataDb: {
     host: process.env.DBMS_DB_HOST || "localhost",
     port: Number(process.env.DBMS_DB_PORT || 3306),
@@ -27,4 +37,10 @@ const config = {
   }
 };
 
-module.exports = { config };
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (config.corsOrigins.includes("*")) return true;
+  return config.corsOrigins.includes(origin);
+}
+
+module.exports = { config, isAllowedOrigin };
