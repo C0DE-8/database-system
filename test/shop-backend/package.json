@@ -1,0 +1,15 @@
+{
+  "name": "shop-backend-test",
+  "version": "1.0.0",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "diamond-sql": "file:../../packages/diamond-sql",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2"
+  }
+}
