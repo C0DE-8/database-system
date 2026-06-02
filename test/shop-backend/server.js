@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const express = require("express");
-const { connectProject } = require("diamond-sql");
+const { connectProject } = require("./diamond-sql");
 
 const app = express();
 const port = Number(process.env.PORT || 5050);

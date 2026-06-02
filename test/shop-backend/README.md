@@ -8,10 +8,10 @@ It does not store MySQL credentials. It only uses:
 - `API_KEY`
 - `DBMS_URL`
 
-It uses the installable `diamond-sql` client, not files from the backend app:
+It uses the local sample `diamond-sql` client, not files from the backend app:
 
 ```js
-const { connectProject } = require("diamond-sql");
+const { connectProject } = require("./diamond-sql");
 ```
 
 That means this app can be hosted on a different server. `DBMS_URL` should point to the hosted DBMS Gateway API.
