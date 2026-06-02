@@ -1,0 +1,54 @@
+I want to add this project to my DBMS using test/shop-backend as the example.
+
+Project type: old project / new project
+Project name:
+SITE_ID:
+Project folder path:
+App runtime/framework:
+
+Current database type: MySQL
+Database host:
+Database port:
+Database name:
+Database user:
+Database password:
+
+DBMS backend URL: http://localhost:4000
+Do I already have a DBMS API key for this SITE_ID? yes / no
+API key, if yes:
+
+Update request:
+Use test/shop-backend as the pattern.
+Update this app to connect through the DBMS with:
+- SITE_ID
+- API_KEY
+- DBMS_URL
+- diamond-sql
+- connectProject(...)
+
+Current app database file, if known:
+Routes/files that currently query the database:
+Anything to avoid changing:
+
+Expected pattern:
+
+1. Add these variables to the app .env:
+
+PORT=
+SITE_ID=
+API_KEY=
+DBMS_URL=http://localhost:4000
+
+2. Use this connector code:
+
+const { connectProject } = require("diamond-sql");
+
+const db = connectProject(process.env.SITE_ID, {
+  apiKey: process.env.API_KEY,
+  dbmsUrl: process.env.DBMS_URL
+});
+
+3. Query through the DBMS:
+
+const [rows] = await db.query("SELECT * FROM table_name WHERE id = ?", [id]);
+

@@ -144,6 +144,7 @@ CREATE TABLE `project_api_keys` (
   `name` varchar(150) NOT NULL,
   `key_prefix` varchar(32) NOT NULL,
   `key_hash` char(64) NOT NULL,
+  `encrypted_api_key` text DEFAULT NULL,
   `last_used_at` timestamp NULL DEFAULT NULL,
   `revoked_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
@@ -153,9 +154,9 @@ CREATE TABLE `project_api_keys` (
 -- Dumping data for table `project_api_keys`
 --
 
-INSERT INTO `project_api_keys` (`id`, `project_id`, `name`, `key_prefix`, `key_hash`, `last_used_at`, `revoked_at`, `created_at`) VALUES
-(2, 2, 'Default key', 'dbms_Kyi8UVr', 'a23584f0f3484bf96162d4f559377b22d3bebd44ca12415a830477bef3528297', NULL, NULL, '2026-05-31 22:52:00'),
-(3, 2, 'Dashboard key', 'dbms_qH0mQUv', 'ffb72021e2c59435f323e327caa9ac4846c6bcaadf8e2adae4518e31b497de07', NULL, NULL, '2026-05-31 22:57:37');
+INSERT INTO `project_api_keys` (`id`, `project_id`, `name`, `key_prefix`, `key_hash`, `encrypted_api_key`, `last_used_at`, `revoked_at`, `created_at`) VALUES
+(2, 2, 'Default key', 'dbms_Kyi8UVr', 'a23584f0f3484bf96162d4f559377b22d3bebd44ca12415a830477bef3528297', NULL, NULL, NULL, '2026-05-31 22:52:00'),
+(3, 2, 'Dashboard key', 'dbms_qH0mQUv', 'ffb72021e2c59435f323e327caa9ac4846c6bcaadf8e2adae4518e31b497de07', NULL, NULL, NULL, '2026-05-31 22:57:37');
 
 -- --------------------------------------------------------
 

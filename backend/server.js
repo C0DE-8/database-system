@@ -70,6 +70,13 @@ app.use(
   createGatewayRouter(projectStore, connectionManager, activityLog)
 );
 
+app.get("/", (req, res) => {
+  res.json({
+    ok: true,
+    message: "DBMS is running",
+  });
+});
+
 app.get("/health", (req, res) => {
   res.json({
     ok: true,
