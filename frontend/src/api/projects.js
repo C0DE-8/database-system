@@ -37,3 +37,22 @@ export async function generateProjectApiKey(siteId, payload) {
 export async function deleteProjectApiKey(siteId, keyId) {
   await api.delete(`/projects/${siteId}/keys/${keyId}`)
 }
+
+export async function listDatabases(siteId) {
+  const response = await api.get(`/projects/${siteId}/databases`)
+  return response.data
+}
+
+export async function listDatabaseTables(siteId, database) {
+  const response = await api.get(
+    `/projects/${siteId}/databases/${encodeURIComponent(database)}/tables`,
+  )
+  return response.data
+}
+
+export async function listTableColumns(siteId, database, table) {
+  const response = await api.get(
+    `/projects/${siteId}/databases/${encodeURIComponent(database)}/tables/${encodeURIComponent(table)}/columns`,
+  )
+  return response.data
+}

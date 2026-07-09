@@ -157,6 +157,104 @@
   min-width: 0;
 }
 
+.browserPanel {
+  display: grid;
+  gap: 14px;
+}
+
+.browserGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.browserColumn,
+.columnsPanel {
+  min-width: 0;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 14px;
+  padding: 12px;
+  background: rgb(8 17 31 / 34%);
+}
+
+.browserTitle {
+  margin-bottom: 10px;
+  color: #f8fbff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.browserList,
+.columnsList {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.browserItem,
+.activeBrowserItem {
+  display: grid;
+  justify-items: start;
+  min-height: auto;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: rgb(255 255 255 / 6%);
+  box-shadow: none;
+  color: #eaf2ff;
+  text-align: left;
+}
+
+.activeBrowserItem {
+  border-color: rgb(45 212 191 / 44%);
+  background: rgb(45 212 191 / 16%);
+}
+
+.browserItem span,
+.activeBrowserItem span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.browserItem small,
+.activeBrowserItem small {
+  color: #8ea1b9;
+  font-size: 11px;
+}
+
+.columnsPanel {
+  margin-top: 2px;
+}
+
+.columnRow {
+  display: grid;
+  gap: 3px;
+  border-radius: 10px;
+  padding: 10px;
+  background: rgb(255 255 255 / 5%);
+}
+
+.columnRow strong {
+  overflow-wrap: anywhere;
+  color: #fff;
+  font-size: 13px;
+}
+
+.columnRow span {
+  overflow-wrap: anywhere;
+  color: #99f6e4;
+  font-size: 12px;
+}
+
+.columnRow small {
+  color: #8ea1b9;
+}
+
 .projectControls {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -570,7 +668,8 @@
   .form,
   .infoGrid,
   .keyRow,
-  .statsGrid {
+  .statsGrid,
+  .browserGrid {
     grid-template-columns: 1fr;
   }
 

@@ -8,7 +8,10 @@ import {
   deleteProjectApiKey,
   generateProjectApiKey,
   getProject,
+  listDatabases,
+  listDatabaseTables,
   listProjects,
+  listTableColumns,
   pingProject,
   updateProject,
 } from '../../api/projects'
@@ -46,6 +49,15 @@ export function Dashboard({ onLogout }) {
   const [projectSearch, setProjectSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [lastSyncedAt, setLastSyncedAt] = useState('')
+  const [browser, setBrowser] = useState({
+    siteId: '',
+    database: '',
+    table: '',
+    databases: [],
+    tables: [],
+    columns: [],
+    loading: false,
+  })
 
   const mergedProjects = useMemo(() => {
     return projects.map((project) => {
@@ -250,6 +262,81 @@ export function Dashboard({ onLogout }) {
       setMessage(`Deleted API key ${key.prefix} from ${project.siteId}.`)
       await refresh()
     } catch (requestError) {
+      setError(requestError.message)
+    }
+  }
+
+  async function openDatabaseBrowser(siteId) {
+    setBrowser((current) => ({
+      ...current,
+      siteId,
+      database: '',
+      table: '',
+      databases: [],
+      tables: [],
+      columns: [],
+      loading: true,
+    }))
+    setError('')
+
+    try {
+      const databases = await listDatabases(siteId)
+      setBrowser((current) => ({
+        ...current,
+        siteId,
+        databases,
+        loading: false,
+      }))
+    } catch (requestError) {
+      setBrowser((current) => ({ ...current, loading: false }))
+      setError(requestError.message)
+    }
+  }
+
+  async function selectDatabase(database) {
+    setBrowser((current) => ({
+      ...current,
+      database,
+      table: '',
+      tables: [],
+      columns: [],
+      loading: true,
+    }))
+    setError('')
+
+    try {
+      const tables = await listDatabaseTables(browser.siteId, database)
+      setBrowser((current) => ({
+        ...current,
+        database,
+        tables,
+        loading: false,
+      }))
+    } catch (requestError) {
+      setBrowser((current) => ({ ...current, loading: false }))
+      setError(requestError.message)
+    }
+  }
+
+  async function selectTable(table) {
+    setBrowser((current) => ({
+      ...current,
+      table,
+      columns: [],
+      loading: true,
+    }))
+    setError('')
+
+    try {
+      const columns = await listTableColumns(browser.siteId, browser.database, table)
+      setBrowser((current) => ({
+        ...current,
+        table,
+        columns,
+        loading: false,
+      }))
+    } catch (requestError) {
+      setBrowser((current) => ({ ...current, loading: false }))
       setError(requestError.message)
     }
   }
@@ -468,6 +555,9 @@ export function Dashboard({ onLogout }) {
                   <button type="button" className={styles.secondary} onClick={() => copyText(project.siteId, 'Site ID')}>
                     Copy ID
                   </button>
+                  <button type="button" className={styles.secondary} onClick={() => openDatabaseBrowser(project.siteId)}>
+                    Browse DBs
+                  </button>
                   <button type="button" className={styles.secondary} onClick={() => runProjectAction('ping', project)}>
                     Ping
                   </button>
@@ -484,6 +574,95 @@ export function Dashboard({ onLogout }) {
         </section>
 
         <aside className={styles.sideRail}>
+        <section className={`${styles.panel} ${styles.browserPanel}`}>
+          <div className={styles.panelHead}>
+            <div>
+              <h2>Database Browser</h2>
+              <p className={styles.muted}>List schemas, tables, and columns from any connected MySQL server.</p>
+            </div>
+          </div>
+
+          <label>
+            Connection
+            <select
+              value={browser.siteId}
+              onChange={(event) => openDatabaseBrowser(event.target.value)}
+            >
+              <option value="">Select a project</option>
+              {mergedProjects.map((project) => (
+                <option value={project.siteId} key={project.siteId}>
+                  {project.name} ({project.siteId})
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {browser.loading && <p className={styles.muted}>Loading database metadata...</p>}
+
+          {browser.siteId && (
+            <div className={styles.browserGrid}>
+              <div className={styles.browserColumn}>
+                <div className={styles.browserTitle}>Databases ({browser.databases.length})</div>
+                <div className={styles.browserList}>
+                  {!browser.databases.length && !browser.loading && (
+                    <p className={styles.muted}>No databases found.</p>
+                  )}
+                  {browser.databases.map((database) => (
+                    <button
+                      type="button"
+                      className={browser.database === database.name ? styles.activeBrowserItem : styles.browserItem}
+                      onClick={() => selectDatabase(database.name)}
+                      key={database.name}
+                    >
+                      <span>{database.name}</span>
+                      {database.system && <small>system</small>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.browserColumn}>
+                <div className={styles.browserTitle}>Tables ({browser.tables.length})</div>
+                <div className={styles.browserList}>
+                  {!browser.database && <p className={styles.muted}>Choose a database.</p>}
+                  {browser.database && !browser.tables.length && !browser.loading && (
+                    <p className={styles.muted}>No tables found.</p>
+                  )}
+                  {browser.tables.map((table) => (
+                    <button
+                      type="button"
+                      className={browser.table === table.name ? styles.activeBrowserItem : styles.browserItem}
+                      onClick={() => selectTable(table.name)}
+                      key={table.name}
+                    >
+                      <span>{table.name}</span>
+                      <small>{table.rowCount ?? 0} rows</small>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {browser.table && (
+            <div className={styles.columnsPanel}>
+              <div className={styles.browserTitle}>Columns in {browser.table}</div>
+              <div className={styles.columnsList}>
+                {browser.columns.map((column) => (
+                  <div className={styles.columnRow} key={column.name}>
+                    <strong>{column.name}</strong>
+                    <span>{column.type}</span>
+                    <small>
+                      {column.columnKey || 'column'} · {column.nullable === 'YES' ? 'nullable' : 'required'}
+                      {column.extra ? ` · ${column.extra}` : ''}
+                    </small>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </section>
+
         <section className={styles.panel}>
           <div className={styles.panelHead}>
             <h2>{form.editingSiteId ? `Edit ${form.editingSiteId}` : 'Add Project'}</h2>

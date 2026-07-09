@@ -40,7 +40,8 @@ body::before {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -65,7 +66,8 @@ button:disabled {
   opacity: 0.7;
 }
 
-input {
+input,
+select {
   min-height: 42px;
   width: 100%;
   border: 1px solid rgb(255 255 255 / 14%);
@@ -76,7 +78,8 @@ input {
   outline: none;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: rgb(45 212 191 / 70%);
   box-shadow: 0 0 0 3px rgb(45 212 191 / 14%);
 }

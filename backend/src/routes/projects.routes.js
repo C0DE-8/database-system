@@ -84,6 +84,75 @@ function createProjectRouter(projectStore, connectionManager, activityLog) {
     }
   });
 
+  router.get("/:siteId/databases", async (req, res) => {
+    try {
+      const rows = await connectionManager.query(
+        req.params.siteId,
+        `SELECT
+          SCHEMA_NAME AS name,
+          DEFAULT_CHARACTER_SET_NAME AS charset,
+          DEFAULT_COLLATION_NAME AS collation
+         FROM INFORMATION_SCHEMA.SCHEMATA
+         ORDER BY SCHEMA_NAME`
+      );
+
+      return res.json(rows.map((row) => ({
+        ...row,
+        system: ["information_schema", "mysql", "performance_schema", "sys"].includes(row.name)
+      })));
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.get("/:siteId/databases/:database/tables", async (req, res) => {
+    try {
+      const rows = await connectionManager.query(
+        req.params.siteId,
+        `SELECT
+          TABLE_NAME AS name,
+          TABLE_TYPE AS type,
+          ENGINE AS engine,
+          TABLE_ROWS AS rowCount,
+          DATA_LENGTH AS dataLength,
+          CREATE_TIME AS createdAt,
+          UPDATE_TIME AS updatedAt
+         FROM INFORMATION_SCHEMA.TABLES
+         WHERE TABLE_SCHEMA = ?
+         ORDER BY TABLE_NAME`,
+        [req.params.database]
+      );
+
+      return res.json(rows);
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
+  router.get("/:siteId/databases/:database/tables/:table/columns", async (req, res) => {
+    try {
+      const rows = await connectionManager.query(
+        req.params.siteId,
+        `SELECT
+          COLUMN_NAME AS name,
+          COLUMN_TYPE AS type,
+          IS_NULLABLE AS nullable,
+          COLUMN_KEY AS columnKey,
+          COLUMN_DEFAULT AS defaultValue,
+          EXTRA AS extra,
+          ORDINAL_POSITION AS position
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
+         ORDER BY ORDINAL_POSITION`,
+        [req.params.database, req.params.table]
+      );
+
+      return res.json(rows);
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
   return router;
 }
 
