@@ -1,18 +1,16 @@
 import { useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { TOKEN_KEY } from './api/client'
 import { AuthRouter } from './routes/AuthRouter'
 import { DashboardRouter } from './routes/DashboardRouter'
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem('dbmsToken') || '')
+  const [token, setToken] = useState(localStorage.getItem(TOKEN_KEY) || '')
 
   return (
     <BrowserRouter>
       <Routes>
-        <Route
-          path="/"
-          element={<Navigate to={token ? '/dashboard' : '/auth'} replace />}
-        />
+        <Route path="/" element={<Navigate to={token ? '/dashboard' : '/auth'} replace />} />
         <Route path="/auth" element={<AuthRouter token={token} onLogin={setToken} />} />
         <Route
           path="/dashboard"

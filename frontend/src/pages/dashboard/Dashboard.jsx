@@ -1,28 +1,17 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { io } from 'socket.io-client'
+import { API_ORIGIN } from '../../api/client'
+import { getLogs, getStatus, getSummary, pingAllProjects } from '../../api/monitor'
 import {
   createProject,
   deleteProject,
-  deleteProjectApiKey,
   generateProjectApiKey,
-  getProject,
   listProjects,
   pingProject,
-  updateProject,
-} from '../../api/projects.routes'
-import { getLogs, getStatus, pingAllProjects } from '../../api/monitor.routes'
-import { API_ORIGIN } from '../../api/client'
-import { ActivityLogs } from '../../components/ActivityLogs'
-import { ConnectorExample } from '../../components/ConnectorExample'
-import { DashboardHeader } from '../../components/DashboardHeader'
-import { MetricsGrid } from '../../components/MetricsGrid'
-import { ProjectFormPanel } from '../../components/ProjectFormPanel'
-import { ProjectsPanel } from '../../components/ProjectsPanel'
-import { mergeProjects } from '../../utils/projects'
+} from '../../api/projects'
 import styles from './Dashboard.module.css'
 
-const emptyProject = {
-  editingSiteId: '',
+const emptyForm = {
   name: '',
   siteId: '',
   host: 'localhost',
@@ -31,246 +20,259 @@ const emptyProject = {
   user: 'root',
   password: '',
   connectionLimit: '10',
-  enabled: true,
 }
 
-export function Dashboard({ token, onLogout }) {
-  const [projectForm, setProjectForm] = useState(emptyProject)
+export function Dashboard({ onLogout }) {
+  const [summary, setSummary] = useState({
+    projects: 0,
+    online: 0,
+    offline: 0,
+    activeQueries: 0,
+    totalQueries: 0,
+  })
   const [projects, setProjects] = useState([])
-  const projectDetailsRef = useRef([])
+  const [statusRows, setStatusRows] = useState([])
   const [logs, setLogs] = useState([])
+  const [form, setForm] = useState(emptyForm)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
-  const [projectSearch, setProjectSearch] = useState('')
-  const [projectPage, setProjectPage] = useState(1)
-  const pageSize = 5
+  const [loading, setLoading] = useState(true)
 
-  const metrics = useMemo(
-    () => ({
-      projects: projects.length,
-      online: projects.filter((project) => project.connection.status === 'online').length,
-      activeQueries: projects.reduce((sum, project) => sum + project.connection.activeQueries, 0),
-      totalQueries: projects.reduce((sum, project) => sum + project.connection.totalQueries, 0),
-    }),
-    [projects],
-  )
-
-  const filteredProjects = useMemo(() => {
-    const query = projectSearch.trim().toLowerCase()
-    if (!query) return projects
-
-    return projects.filter((project) => {
-      const credentials = project.credentials || {}
-      return [
-        project.name,
-        project.siteId,
-        credentials.database,
-        credentials.host,
-        credentials.user,
-        project.connection?.status,
-      ]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(query))
+  const mergedProjects = useMemo(() => {
+    return projects.map((project) => {
+      const status = statusRows.find((row) => row.siteId === project.siteId)
+      return {
+        ...project,
+        connection: status?.connection || project.connection || {},
+      }
     })
-  }, [projectSearch, projects])
-
-  const pageCount = Math.max(1, Math.ceil(filteredProjects.length / pageSize))
-  const currentProjectPage = Math.min(projectPage, pageCount)
-  const visibleProjects = filteredProjects.slice(
-    (currentProjectPage - 1) * pageSize,
-    currentProjectPage * pageSize,
-  )
-
-  const logout = useCallback(() => {
-    localStorage.removeItem('dbmsToken')
-    setProjects([])
-    setLogs([])
-    onLogout()
-  }, [onLogout])
-
-  const loadLogs = useCallback(async () => {
-    if (!token) return
-    setLogs(await getLogs())
-  }, [token])
+  }, [projects, statusRows])
 
   const refresh = useCallback(async () => {
-    if (!token) return
-
     try {
-      const [statusRows, detailRows, logRows] = await Promise.all([
-        getStatus(),
+      const [nextSummary, nextProjects, nextStatus, nextLogs] = await Promise.all([
+        getSummary(),
         listProjects(),
+        getStatus(),
         getLogs(),
       ])
-      projectDetailsRef.current = detailRows
-      setProjects(mergeProjects(statusRows, detailRows))
-      setLogs(logRows)
+      setSummary(nextSummary)
+      setProjects(nextProjects)
+      setStatusRows(nextStatus)
+      setLogs(nextLogs)
       setError('')
     } catch (requestError) {
       setError(requestError.message)
       if (requestError.message.toLowerCase().includes('token')) {
-        logout()
+        localStorage.removeItem('dbmsToken')
+        onLogout()
       }
+    } finally {
+      setLoading(false)
     }
-  }, [logout, token])
+  }, [onLogout])
 
   useEffect(() => {
-    if (!token) return undefined
-
     queueMicrotask(() => {
       refresh()
     })
+
     const socket = io(API_ORIGIN)
-    socket.on('status', (statusRows) => {
-      setProjects(mergeProjects(statusRows, projectDetailsRef.current))
+    socket.on('status', setStatusRows)
+    socket.on('activity', () => {
+      getLogs().then(setLogs).catch((requestError) => setError(requestError.message))
     })
-    socket.on('activity', loadLogs)
-    const pingTimer = setInterval(async () => {
-      try {
-        await pingAllProjects()
-        await refresh()
-      } catch (requestError) {
-        setError(requestError.message)
-      }
-    }, 30000)
 
-    return () => {
-      socket.disconnect()
-      clearInterval(pingTimer)
-    }
-  }, [loadLogs, refresh, token])
+    return () => socket.disconnect()
+  }, [refresh])
 
-  async function handleProjectSubmit(event) {
+  function logout() {
+    localStorage.removeItem('dbmsToken')
+    onLogout()
+  }
+
+  async function handleCreateProject(event) {
     event.preventDefault()
-    const payload = {
-      name: projectForm.name,
-      siteId: projectForm.siteId,
-      enabled: projectForm.enabled,
-      credentials: {
-        host: projectForm.host || 'localhost',
-        port: Number(projectForm.port || 3306),
-        database: projectForm.database,
-        user: projectForm.user || 'root',
-        password: projectForm.password || '',
-        connectionLimit: Number(projectForm.connectionLimit || 10),
-      },
-    }
-
-    if (projectForm.editingSiteId && !projectForm.password) {
-      delete payload.credentials
-    }
+    setMessage('')
+    setError('')
 
     try {
-      const result = projectForm.editingSiteId
-        ? await updateProject(projectForm.editingSiteId, payload)
-        : await createProject(payload)
-      setMessage(`Saved.${result?.apiKey ? ` New API key: ${result.apiKey}` : ''}`)
-      clearProjectForm(false)
-      refresh()
+      const result = await createProject({
+        name: form.name,
+        siteId: form.siteId,
+        enabled: true,
+        credentials: {
+          host: form.host,
+          port: Number(form.port || 3306),
+          database: form.database,
+          user: form.user,
+          password: form.password,
+          connectionLimit: Number(form.connectionLimit || 10),
+        },
+      })
+      setForm(emptyForm)
+      setMessage(`Project saved.${result.apiKey ? ` API key: ${result.apiKey}` : ''}`)
+      await refresh()
     } catch (requestError) {
-      setMessage(requestError.message)
+      setError(requestError.message)
     }
   }
 
-  async function editProject(project) {
-    const fullProject = await getProject(project.siteId)
-    const credentials = fullProject.credentials || {}
-    setProjectForm({
-      ...emptyProject,
-      editingSiteId: fullProject.siteId,
-      name: fullProject.name,
-      siteId: fullProject.siteId,
-      host: credentials.host || 'localhost',
-      port: String(credentials.port || 3306),
-      database: credentials.database || '',
-      user: credentials.user || 'root',
-      password: credentials.password || '',
-      connectionLimit: String(credentials.connectionLimit || 10),
-      enabled: fullProject.enabled,
-    })
-    setMessage('Loaded saved project configuration.')
-  }
+  async function runProjectAction(action, project) {
+    setMessage('')
+    setError('')
 
-  async function handleProjectAction(action, project) {
-    if (action === 'ping') {
-      await pingProject(project.siteId)
+    try {
+      if (action === 'ping') {
+        const result = await pingProject(project.siteId)
+        setMessage(`${project.siteId} is ${result.online ? 'online' : 'offline'}.`)
+      }
+
+      if (action === 'key') {
+        const result = await generateProjectApiKey(project.siteId, { name: 'Dashboard key' })
+        setMessage(`New API key for ${project.siteId}: ${result.apiKey}`)
+      }
+
+      if (action === 'delete') {
+        await deleteProject(project.siteId)
+        setMessage(`Deleted ${project.siteId}.`)
+      }
+
+      await refresh()
+    } catch (requestError) {
+      setError(requestError.message)
     }
+  }
 
-    if (action === 'key') {
-      const result = await generateProjectApiKey(project.siteId, { name: 'Dashboard key' })
-      setMessage(`New API key for ${project.siteId}: ${result.apiKey}`)
+  async function pingAll() {
+    try {
+      await pingAllProjects()
+      setMessage('Pinged all projects.')
+      await refresh()
+    } catch (requestError) {
+      setError(requestError.message)
     }
-
-    if (action === 'delete') {
-      await deleteProject(project.siteId)
-      setMessage(`Deleted ${project.siteId}`)
-    }
-
-    refresh()
-  }
-
-  function clearProjectForm(clearMessage = true) {
-    setProjectForm(emptyProject)
-    if (clearMessage) setMessage('')
-  }
-
-  async function copyText(value, label) {
-    if (!value) {
-      setMessage(`${label} is not available. Generate a new API key to make it copyable.`)
-      return
-    }
-    await navigator.clipboard.writeText(value)
-    setMessage(`${label} copied.`)
-  }
-
-  async function handleDeleteApiKey(project, key) {
-    await deleteProjectApiKey(project.siteId, key.id)
-    setMessage(`Deleted API key ${key.prefix} for ${project.siteId}.`)
-    refresh()
-  }
-
-  function updateProjectForm(changes) {
-    setProjectForm((current) => ({ ...current, ...changes }))
   }
 
   return (
     <main className={styles.shell}>
-      <DashboardHeader onLogout={logout} />
-      <MetricsGrid metrics={metrics} />
+      <header className={styles.header}>
+        <div>
+          <p className={styles.eyebrow}>DBMS Gateway</p>
+          <h1>Connection Management</h1>
+        </div>
+        <div className={styles.headerActions}>
+          <button type="button" className={styles.secondary} onClick={refresh}>
+            Refresh
+          </button>
+          <button type="button" className={styles.secondary} onClick={logout}>
+            Log out
+          </button>
+        </div>
+      </header>
 
-      <section className="workspace">
-        <ProjectsPanel
-          projects={projects}
-          filteredProjects={filteredProjects}
-          visibleProjects={visibleProjects}
-          projectSearch={projectSearch}
-          currentProjectPage={currentProjectPage}
-          pageCount={pageCount}
-          onSearchChange={(value) => {
-            setProjectSearch(value)
-            setProjectPage(1)
-          }}
-          onPageChange={setProjectPage}
-          onRefresh={refresh}
-          onEdit={editProject}
-          onProjectAction={handleProjectAction}
-          onCopy={copyText}
-          onDeleteApiKey={handleDeleteApiKey}
-        />
-        <ProjectFormPanel
-          projectForm={projectForm}
-          message={message}
-          error={error}
-          onSubmit={handleProjectSubmit}
-          onClear={() => clearProjectForm()}
-          onChange={updateProjectForm}
-        />
+      <section className={styles.metrics}>
+        <Metric label="Projects" value={summary.projects} />
+        <Metric label="Online" value={summary.online} />
+        <Metric label="Offline" value={summary.offline} />
+        <Metric label="Total Queries" value={summary.totalQueries} />
       </section>
 
-      <section className="workspace lower">
-        <ActivityLogs logs={logs} />
-        <ConnectorExample />
+      {(message || error) && (
+        <div className={error ? styles.alertError : styles.alert}>{error || message}</div>
+      )}
+
+      <section className={styles.grid}>
+        <section className={styles.panel}>
+          <div className={styles.panelHead}>
+            <h2>Projects</h2>
+            <button type="button" className={styles.secondary} onClick={pingAll}>
+              Ping all
+            </button>
+          </div>
+
+          {loading && <p className={styles.muted}>Loading projects...</p>}
+          {!loading && !mergedProjects.length && <p className={styles.muted}>No projects yet.</p>}
+
+          <div className={styles.projectList}>
+            {mergedProjects.map((project) => (
+              <article className={styles.project} key={project.siteId}>
+                <div className={styles.projectTop}>
+                  <div>
+                    <strong>{project.name}</strong>
+                    <span>{project.siteId}</span>
+                  </div>
+                  <StatusBadge status={project.connection?.status || 'unknown'} />
+                </div>
+                <p className={styles.muted}>
+                  {project.credentials?.user || 'root'}@{project.credentials?.host || 'localhost'}:
+                  {project.credentials?.port || 3306}/{project.credentials?.database || 'not set'}
+                </p>
+                <p className={styles.muted}>
+                  Queries: {project.connection?.totalQueries || 0} total,{' '}
+                  {project.connection?.activeQueries || 0} active
+                </p>
+                {project.connection?.lastError && (
+                  <p className={styles.errorText}>{project.connection.lastError}</p>
+                )}
+                <div className={styles.actions}>
+                  <button type="button" className={styles.secondary} onClick={() => runProjectAction('ping', project)}>
+                    Ping
+                  </button>
+                  <button type="button" className={styles.secondary} onClick={() => runProjectAction('key', project)}>
+                    Generate key
+                  </button>
+                  <button type="button" className={styles.danger} onClick={() => runProjectAction('delete', project)}>
+                    Delete
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.panel}>
+          <h2>Add Project</h2>
+          <form className={styles.form} onSubmit={handleCreateProject}>
+            <input placeholder="Project name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
+            <input placeholder="Site ID" value={form.siteId} onChange={(event) => setForm({ ...form, siteId: event.target.value })} required />
+            <input placeholder="Host" value={form.host} onChange={(event) => setForm({ ...form, host: event.target.value })} />
+            <input placeholder="Port" type="number" value={form.port} onChange={(event) => setForm({ ...form, port: event.target.value })} />
+            <input placeholder="Database" value={form.database} onChange={(event) => setForm({ ...form, database: event.target.value })} required />
+            <input placeholder="User" value={form.user} onChange={(event) => setForm({ ...form, user: event.target.value })} />
+            <input placeholder="Password" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
+            <input placeholder="Pool size" type="number" value={form.connectionLimit} onChange={(event) => setForm({ ...form, connectionLimit: event.target.value })} />
+            <button type="submit">Save project</button>
+          </form>
+        </section>
+      </section>
+
+      <section className={styles.panel}>
+        <h2>Activity Logs</h2>
+        <div className={styles.logs}>
+          {!logs.length && <p className={styles.muted}>No logs yet.</p>}
+          {logs.map((log) => (
+            <article className={styles.log} key={log.id}>
+              <strong>{log.type}</strong>
+              <span>{new Date(log.createdAt).toLocaleString()}</span>
+              <p>{log.message}</p>
+            </article>
+          ))}
+        </div>
       </section>
     </main>
   )
+}
+
+function Metric({ label, value }) {
+  return (
+    <article className={styles.metric}>
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </article>
+  )
+}
+
+function StatusBadge({ status }) {
+  return <span className={`${styles.status} ${styles[status] || ''}`}>{status}</span>
 }

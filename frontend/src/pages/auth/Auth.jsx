@@ -1,40 +1,46 @@
 import { useState } from 'react'
-import { login } from '../../api/auth.routes'
+import { login } from '../../api/auth'
+import { API_BASE_URL } from '../../api/client'
 import styles from './Auth.module.css'
 
 export function Auth({ onLogin }) {
-  const [loginForm, setLoginForm] = useState({
+  const [form, setForm] = useState({
     email: 'admin@example.com',
     password: 'change-me-now',
   })
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  async function handleLogin(event) {
+  async function handleSubmit(event) {
     event.preventDefault()
+    setLoading(true)
+    setError('')
+
     try {
-      const result = await login(loginForm)
+      const result = await login(form)
       localStorage.setItem('dbmsToken', result.token)
       onLogin(result.token)
-      setError('')
     } catch (requestError) {
       setError(requestError.message)
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <main className={styles.shell}>
-      <section className={styles.loginPanel}>
-        <div>
-          <p className={styles.eyebrow}>DBMS Gateway</p>
-          <h1>Admin Console</h1>
-        </div>
-        <form className={styles.form} onSubmit={handleLogin}>
+    <main className={styles.page}>
+      <section className={styles.panel}>
+        <p className={styles.eyebrow}>DBMS Gateway</p>
+        <h1>Admin Console</h1>
+        <p className={styles.copy}>Sign in to manage project database connections and API keys.</p>
+
+        <form className={styles.form} onSubmit={handleSubmit}>
           <label>
             Email
             <input
               type="email"
-              value={loginForm.email}
-              onChange={(event) => setLoginForm({ ...loginForm, email: event.target.value })}
+              value={form.email}
+              onChange={(event) => setForm({ ...form, email: event.target.value })}
               required
             />
           </label>
@@ -42,14 +48,18 @@ export function Auth({ onLogin }) {
             Password
             <input
               type="password"
-              value={loginForm.password}
-              onChange={(event) => setLoginForm({ ...loginForm, password: event.target.value })}
+              value={form.password}
+              onChange={(event) => setForm({ ...form, password: event.target.value })}
               required
             />
           </label>
-          <button type="submit">Sign in</button>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign in'}
+          </button>
           {error && <p className={styles.error}>{error}</p>}
         </form>
+
+        <p className={styles.endpoint}>API: {API_BASE_URL}</p>
       </section>
     </main>
   )

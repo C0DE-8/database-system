@@ -1,234 +1,177 @@
 .shell {
+  min-height: 100vh;
   max-width: 1280px;
   margin: 0 auto;
   padding: 32px;
 }
 
-:global(.topbar),
-:global(.panel-head) {
+.header,
+.panelHead,
+.projectTop,
+.headerActions,
+.actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
-:global(.eyebrow) {
+.header {
+  margin-bottom: 24px;
+}
+
+.headerActions,
+.actions {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.eyebrow {
   margin: 0 0 4px;
-  color: var(--accent);
+  color: #0f766e;
   font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0;
   text-transform: uppercase;
 }
 
-:global(.list-controls),
-:global(.pagination) {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-:global(.list-controls input) {
-  max-width: 360px;
-}
-
-:global(.metrics) {
+.metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  margin: 24px 0;
+  margin-bottom: 18px;
 }
 
-:global(.metrics article),
-:global(.panel) {
-  background: var(--panel);
-  border: 1px solid var(--line);
+.metric,
+.panel,
+.project {
+  background: #fff;
+  border: 1px solid #d9e0ea;
   border-radius: 8px;
 }
 
-:global(.metrics article) {
+.metric {
   padding: 18px;
 }
 
-:global(.metrics span) {
+.metric strong {
   display: block;
-  font-size: 28px;
+  color: #172033;
+  font-size: 30px;
+}
+
+.metric span,
+.muted {
+  color: #667085;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.panel {
+  min-width: 0;
+  padding: 18px;
+}
+
+.projectList,
+.logs,
+.form {
+  display: grid;
+  gap: 12px;
+}
+
+.projectList {
+  max-height: 620px;
+  overflow: auto;
+}
+
+.project {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.projectTop strong,
+.projectTop span {
+  display: block;
+}
+
+.projectTop span {
+  color: #667085;
+  font-size: 13px;
+}
+
+.status {
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #f2f4f7;
+  color: #667085;
+  font-size: 12px;
   font-weight: 800;
 }
 
-:global(.metrics small) {
-  color: var(--muted);
+.online {
+  background: #dcfae6;
+  color: #047857;
 }
 
-:global(.workspace) {
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
-  gap: 16px;
+.offline {
+  background: #fef0c7;
+  color: #b45309;
 }
 
-:global(.workspace.lower) {
-  margin-top: 16px;
-}
-
-:global(.panel) {
-  padding: 18px;
-  min-width: 0;
-}
-
-:global(.form) {
-  display: grid;
-  gap: 14px;
-}
-
-:global(.grid-form) {
+.form {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-:global(.grid-form button),
-:global(.grid-form .message),
-:global(.grid-form .error),
-:global(.grid-form .checkbox) {
+.form button {
   grid-column: 1 / -1;
 }
 
-:global(.checkbox) {
-  display: flex;
-  align-items: center;
-}
-
-:global(.checkbox input) {
-  width: auto;
-  min-height: auto;
-}
-
-:global(.project-list),
-:global(.logs) {
-  display: grid;
-  gap: 10px;
-  max-height: 560px;
-  overflow: auto;
-}
-
-:global(.project) {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 14px;
-  display: grid;
-  gap: 12px;
-}
-
-:global(.project-row) {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-:global(.status) {
-  border-radius: 999px;
-  padding: 4px 9px;
-  font-size: 12px;
-  font-weight: 800;
-  background: #f2f4f7;
-  color: var(--muted);
-}
-
-:global(.status.online) {
-  background: #dcfae6;
-  color: var(--ok);
-}
-
-:global(.status.offline) {
-  background: #fef0c7;
-  color: var(--warn);
-}
-
-:global(.actions) {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-:global(.key) {
-  display: grid;
-  gap: 4px;
-  padding: 8px 10px;
-  background: #f8fafc;
-  border-radius: 6px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-:global(.key strong),
-:global(.key-list strong) {
-  color: var(--ink);
-}
-
-:global(.key-list) {
-  display: grid;
-  gap: 8px;
-  padding: 8px 10px;
-  background: #f8fafc;
-  border-radius: 6px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-:global(.key-row) {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
-  align-items: center;
-  gap: 8px;
-}
-
-:global(.key-row code) {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.secondary {
   background: #eef3f7;
-  border-radius: 4px;
-  padding: 5px 7px;
-  color: var(--ink);
+  color: #172033;
 }
 
-:global(.muted) {
-  color: var(--muted);
+.danger {
+  background: #b42318;
 }
 
-:global(.error) {
-  color: var(--danger);
-  margin-bottom: 0;
-}
-
-:global(.message) {
-  color: var(--accent);
-  margin-bottom: 0;
-}
-
-:global(.log) {
-  border-bottom: 1px solid var(--line);
-  padding: 10px 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-:global(.log strong) {
-  display: block;
-  color: var(--ink);
-}
-
-:global(pre) {
-  margin: 0;
-  overflow: auto;
-  background: #111827;
-  color: #e5e7eb;
+.alert,
+.alertError {
+  margin-bottom: 16px;
   border-radius: 8px;
-  padding: 16px;
+  padding: 12px 14px;
+  background: #ecfdf3;
+  color: #047857;
+  font-weight: 700;
+}
+
+.alertError,
+.errorText {
+  color: #b42318;
+}
+
+.alertError {
+  background: #fef3f2;
+}
+
+.log {
+  border-bottom: 1px solid #d9e0ea;
+  padding-bottom: 10px;
+  color: #667085;
+}
+
+.log strong {
+  display: block;
+  color: #172033;
+}
+
+.log span {
+  font-size: 12px;
 }
 
 @media (max-width: 900px) {
@@ -236,28 +179,16 @@
     padding: 18px;
   }
 
-  :global(.metrics),
-  :global(.workspace),
-  :global(.grid-form) {
-    grid-template-columns: 1fr;
-  }
-
-  :global(.topbar) {
+  .header,
+  .panelHead,
+  .projectTop {
     align-items: flex-start;
   }
 
-  :global(.list-controls),
-  :global(.pagination) {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  :global(.list-controls input) {
-    max-width: none;
-  }
-
-  :global(.key-row) {
+  .header,
+  .metrics,
+  .grid,
+  .form {
     grid-template-columns: 1fr;
-    align-items: stretch;
   }
 }
