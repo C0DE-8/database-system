@@ -9,16 +9,17 @@ import {
   listProjects,
   pingProject,
   updateProject,
-} from '../api/projects.routes'
-import { getLogs, getStatus, pingAllProjects } from '../api/monitor.routes'
-import { API_ORIGIN } from '../api/client'
-import { ActivityLogs } from '../components/ActivityLogs'
-import { ConnectorExample } from '../components/ConnectorExample'
-import { DashboardHeader } from '../components/DashboardHeader'
-import { MetricsGrid } from '../components/MetricsGrid'
-import { ProjectFormPanel } from '../components/ProjectFormPanel'
-import { ProjectsPanel } from '../components/ProjectsPanel'
-import { mergeProjects } from '../utils/projects'
+} from '../../api/projects.routes'
+import { getLogs, getStatus, pingAllProjects } from '../../api/monitor.routes'
+import { API_ORIGIN } from '../../api/client'
+import { ActivityLogs } from '../../components/ActivityLogs'
+import { ConnectorExample } from '../../components/ConnectorExample'
+import { DashboardHeader } from '../../components/DashboardHeader'
+import { MetricsGrid } from '../../components/MetricsGrid'
+import { ProjectFormPanel } from '../../components/ProjectFormPanel'
+import { ProjectsPanel } from '../../components/ProjectsPanel'
+import { mergeProjects } from '../../utils/projects'
+import styles from './Dashboard.module.css'
 
 const emptyProject = {
   editingSiteId: '',
@@ -33,7 +34,7 @@ const emptyProject = {
   enabled: true,
 }
 
-export function DashboardPage({ token, onLogout }) {
+export function Dashboard({ token, onLogout }) {
   const [projectForm, setProjectForm] = useState(emptyProject)
   const [projects, setProjects] = useState([])
   const projectDetailsRef = useRef([])
@@ -233,7 +234,7 @@ export function DashboardPage({ token, onLogout }) {
   }
 
   return (
-    <main className="shell">
+    <main className={styles.shell}>
       <DashboardHeader onLogout={logout} />
       <MetricsGrid metrics={metrics} />
 
@@ -273,4 +274,3 @@ export function DashboardPage({ token, onLogout }) {
     </main>
   )
 }
-

@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { login } from '../api/auth.routes'
+import { login } from '../../api/auth.routes'
+import styles from './Auth.module.css'
 
-export function LoginPage({ onLogin }) {
+export function Auth({ onLogin }) {
   const [loginForm, setLoginForm] = useState({
     email: 'admin@example.com',
     password: 'change-me-now',
@@ -21,13 +22,13 @@ export function LoginPage({ onLogin }) {
   }
 
   return (
-    <main className="shell">
-      <section className="login-panel">
+    <main className={styles.shell}>
+      <section className={styles.loginPanel}>
         <div>
-          <p className="eyebrow">DBMS Gateway</p>
+          <p className={styles.eyebrow}>DBMS Gateway</p>
           <h1>Admin Console</h1>
         </div>
-        <form className="form" onSubmit={handleLogin}>
+        <form className={styles.form} onSubmit={handleLogin}>
           <label>
             Email
             <input
@@ -47,10 +48,9 @@ export function LoginPage({ onLogin }) {
             />
           </label>
           <button type="submit">Sign in</button>
-          {error && <p className="error">{error}</p>}
+          {error && <p className={styles.error}>{error}</p>}
         </form>
       </section>
     </main>
   )
 }
-

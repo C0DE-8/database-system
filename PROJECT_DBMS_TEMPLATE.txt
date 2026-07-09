@@ -1,54 +1,149 @@
-I want to add this project to my DBMS using test/shop-backend as the example.
+I want to update this project to use my DBMS Gateway connection style.
 
+Read this first:
+You may not know my DBMS project yet. This prompt should give you enough context.
+I have a central Node.js DBMS Gateway that stores MySQL connection details for multiple apps.
+Each app is registered in the gateway by `SITE_ID`.
+The gateway owns the real MySQL host, port, database, user, password, pool limits, and API keys.
+The consuming app should not connect directly to MySQL with local DB credentials anymore.
+Instead, the app uses a small client called `diamond-sql`.
+That client sends the app `SITE_ID` and `API_KEY` to `DBMS_URL`, gets/uses the correct project database connection through the gateway, and exposes simple methods like `db.query(...)`, `db.execute(...)`, and `db.status(...)`.
+
+Use `test/shop-backend` as the working example.
+
+Goal:
+- Keep real MySQL credentials in the DBMS Gateway project record.
+- Do not keep database host/user/password in the consuming app after migration.
+- The app should only need `SITE_ID`, `API_KEY`, and `DBMS_URL` to query its database.
+- Use the `diamond-sql` client and `connectProject(...)` pattern.
+
+Project details:
 Project type: old project / new project
 Project name:
 SITE_ID:
 Project folder path:
 App runtime/framework:
+Package manager: npm / yarn / pnpm / other
+Start command:
 
-Current database type: MySQL
+Current database:
+Database type: MySQL
 Database host:
-Database port:
+Database port: 3306
 Database name:
 Database user:
 Database password:
+Database charset, if known:
+Connection limit, if known:
+Queue limit, if known:
 
+DBMS Gateway:
 DBMS backend URL: http://localhost:4000
-Do I already have a DBMS API key for this SITE_ID? yes / no
+Is the DBMS Gateway already running? yes / no
+Is this SITE_ID already created in the DBMS dashboard/API? yes / no
+Do I already have the full DBMS API key for this SITE_ID? yes / no
 API key, if yes:
 
-Update request:
-Use test/shop-backend as the pattern.
-Update this app to connect through the DBMS with:
-- SITE_ID
-- API_KEY
-- DBMS_URL
-- diamond-sql
-- connectProject(...)
+Important API key note:
+The dashboard project list may show only a short key prefix like `dbms_abc123`.
+That prefix is not valid for app connections. The app needs the full API key value shown once when the key is generated. If I do not have the full key, generate a new key and put the full value in the app `.env`.
 
+Files to inspect/update:
 Current app database file, if known:
-Routes/files that currently query the database:
+Routes/services/models that currently query the database:
+Current `.env` or `.env.example` path:
 Anything to avoid changing:
 
-Expected pattern:
+Update request:
+Please update this app to connect through the DBMS Gateway in the same style as `test/shop-backend`.
 
-1. Add these variables to the app .env:
+What `test/shop-backend` means:
+- It is only an example consumer app.
+- It does not store MySQL credentials in its own `.env`.
+- Its `.env` only needs `PORT`, `SITE_ID`, `API_KEY`, and `DBMS_URL`.
+- It creates one shared connector with `connectProject(...)`.
+- Its routes call `db.query(...)` instead of using a direct MySQL pool from local DB env vars.
+- Its health route calls `db.status()` to verify the gateway connection.
+
+Implementation requirements:
+1. Register or verify the project in the DBMS Gateway using this `SITE_ID` and the real MySQL connection settings above.
+2. Add or update the consuming app env vars:
 
 PORT=
 SITE_ID=
 API_KEY=
 DBMS_URL=http://localhost:4000
 
-2. Use this connector code:
+Optional:
+DBMS_TIMEOUT_MS=15000
+
+3. Remove direct app dependency on local MySQL credentials where possible:
+- Replace app-level `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` usage with the DBMS Gateway connector.
+- Do not delete unrelated env vars.
+- Keep direct MySQL credentials only in DBMS Gateway project configuration, not in the consuming app.
+
+4. Install/use `diamond-sql`:
+- Prefer the installable `diamond-sql` package when available:
+
+const { connectProject } = require("diamond-sql");
+
+- If this project is only a local test or the package is not available, copy/adapt the `test/shop-backend/diamond-sql.js` client into the consuming app and import it locally:
+
+const { connectProject } = require("./diamond-sql");
+
+5. Create one shared DB connector in the consuming app, for example:
+
+require("dotenv").config();
 
 const { connectProject } = require("diamond-sql");
 
 const db = connectProject(process.env.SITE_ID, {
   apiKey: process.env.API_KEY,
-  dbmsUrl: process.env.DBMS_URL
+  dbmsUrl: process.env.DBMS_URL,
+  timeoutMs: process.env.DBMS_TIMEOUT_MS
 });
 
-3. Query through the DBMS:
+module.exports = db;
+
+6. Update queries to go through this shared connector.
+
+For the local `test/shop-backend/diamond-sql.js` gateway client, query results are plain rows:
+
+const rows = await db.query("SELECT * FROM table_name WHERE id = ?", [id]);
+
+For the installable mysql2-style `diamond-sql` connector, query results may be mysql2-style tuples:
 
 const [rows] = await db.query("SELECT * FROM table_name WHERE id = ?", [id]);
 
+Use the style that matches the connector actually installed in the target app. Keep existing route response behavior the same.
+
+7. Add or keep a health check that verifies the DBMS connection, similar to:
+
+app.get("/health", async (req, res) => {
+  try {
+    const status = await db.status();
+    res.json({ ok: true, gateway: status });
+  } catch (error) {
+    res.status(503).json({ ok: false, error: error.message });
+  }
+});
+
+8. Validate after updating:
+- Start the DBMS Gateway.
+- Start the consuming app.
+- Call the app health endpoint.
+- Call at least one route that reads from the database.
+- Confirm the app does not require direct database credentials in its `.env`.
+
+Expected final shape:
+- Consuming app `.env` contains `SITE_ID`, full `API_KEY`, and `DBMS_URL`.
+- Consuming app code imports one shared DBMS connector.
+- App routes/services call `db.query(...)`, `db.execute(...)`, or `db.status(...)`.
+- The DBMS Gateway owns the real MySQL host/user/password for the project.
+- Existing API behavior stays the same except database access now flows through the DBMS Gateway.
+
+If anything is missing:
+- Inspect the target app first.
+- Find its current DB connection file and all direct MySQL usage.
+- Preserve its current routes and response shapes.
+- Ask only for secrets or values that are not present and cannot be inferred, such as the full API key or missing database password.

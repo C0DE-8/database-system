@@ -1,86 +1,18 @@
-:root {
-  color-scheme: light;
-  --bg: #f5f7fb;
-  --panel: #ffffff;
-  --ink: #172033;
-  --muted: #667085;
-  --line: #d9e0ea;
-  --accent: #0f766e;
-  --accent-strong: #115e59;
-  --danger: #b42318;
-  --ok: #047857;
-  --warn: #b45309;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: var(--bg);
-  color: var(--ink);
-}
-
-button,
-input {
-  font: inherit;
-}
-
-button {
-  min-height: 40px;
-  border: 0;
-  border-radius: 6px;
-  padding: 0 14px;
-  background: var(--accent);
-  color: white;
-  cursor: pointer;
-  font-weight: 700;
-}
-
-button:hover {
-  background: var(--accent-strong);
-}
-
-button.secondary {
-  background: #eef3f7;
-  color: var(--ink);
-}
-
-button.danger {
-  background: var(--danger);
-}
-
-button.compact {
-  min-height: 30px;
-  padding: 0 10px;
-  font-size: 12px;
-}
-
-button:disabled,
-input:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
 .shell {
   max-width: 1280px;
   margin: 0 auto;
   padding: 32px;
 }
 
-.login-panel {
-  width: min(420px, 100%);
-  margin: 12vh auto;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 28px;
-  box-shadow: 0 18px 60px rgb(23 32 51 / 10%);
+:global(.topbar),
+:global(.panel-head) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.eyebrow {
+:global(.eyebrow) {
   margin: 0 0 4px;
   color: var(--accent);
   font-size: 12px;
@@ -89,32 +21,8 @@ input:disabled {
   text-transform: uppercase;
 }
 
-h1,
-h2,
-p {
-  margin-top: 0;
-}
-
-h1 {
-  margin-bottom: 0;
-  font-size: 28px;
-}
-
-h2 {
-  margin-bottom: 16px;
-  font-size: 18px;
-}
-
-.topbar,
-.panel-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.list-controls,
-.pagination {
+:global(.list-controls),
+:global(.pagination) {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -125,106 +33,88 @@ h2 {
   font-weight: 700;
 }
 
-.list-controls input {
+:global(.list-controls input) {
   max-width: 360px;
 }
 
-.metrics {
+:global(.metrics) {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin: 24px 0;
 }
 
-.metrics article,
-.panel {
+:global(.metrics article),
+:global(.panel) {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 8px;
 }
 
-.metrics article {
+:global(.metrics article) {
   padding: 18px;
 }
 
-.metrics span {
+:global(.metrics span) {
   display: block;
   font-size: 28px;
   font-weight: 800;
 }
 
-.metrics small {
+:global(.metrics small) {
   color: var(--muted);
 }
 
-.workspace {
+:global(.workspace) {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
   gap: 16px;
 }
 
-.workspace.lower {
+:global(.workspace.lower) {
   margin-top: 16px;
 }
 
-.panel {
+:global(.panel) {
   padding: 18px;
   min-width: 0;
 }
 
-.form {
+:global(.form) {
   display: grid;
   gap: 14px;
 }
 
-.grid-form {
+:global(.grid-form) {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.grid-form button,
-.grid-form .message,
-.grid-form .error,
-.grid-form .checkbox {
+:global(.grid-form button),
+:global(.grid-form .message),
+:global(.grid-form .error),
+:global(.grid-form .checkbox) {
   grid-column: 1 / -1;
 }
 
-label {
-  display: grid;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-input {
-  min-height: 40px;
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 0 10px;
-  color: var(--ink);
-  background: #fff;
-}
-
-.checkbox {
+:global(.checkbox) {
   display: flex;
   align-items: center;
 }
 
-.checkbox input {
+:global(.checkbox input) {
   width: auto;
   min-height: auto;
 }
 
-.project-list,
-.logs {
+:global(.project-list),
+:global(.logs) {
   display: grid;
   gap: 10px;
   max-height: 560px;
   overflow: auto;
 }
 
-.project {
+:global(.project) {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 14px;
@@ -232,14 +122,14 @@ input {
   gap: 12px;
 }
 
-.project-row {
+:global(.project-row) {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
 
-.status {
+:global(.status) {
   border-radius: 999px;
   padding: 4px 9px;
   font-size: 12px;
@@ -248,23 +138,23 @@ input {
   color: var(--muted);
 }
 
-.status.online {
+:global(.status.online) {
   background: #dcfae6;
   color: var(--ok);
 }
 
-.status.offline {
+:global(.status.offline) {
   background: #fef0c7;
   color: var(--warn);
 }
 
-.actions {
+:global(.actions) {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.key {
+:global(.key) {
   display: grid;
   gap: 4px;
   padding: 8px 10px;
@@ -274,12 +164,12 @@ input {
   font-size: 13px;
 }
 
-.key strong,
-.key-list strong {
+:global(.key strong),
+:global(.key-list strong) {
   color: var(--ink);
 }
 
-.key-list {
+:global(.key-list) {
   display: grid;
   gap: 8px;
   padding: 8px 10px;
@@ -289,14 +179,14 @@ input {
   font-size: 13px;
 }
 
-.key-row {
+:global(.key-row) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 8px;
 }
 
-.key-row code {
+:global(.key-row code) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -306,33 +196,33 @@ input {
   color: var(--ink);
 }
 
-.muted {
+:global(.muted) {
   color: var(--muted);
 }
 
-.error {
+:global(.error) {
   color: var(--danger);
   margin-bottom: 0;
 }
 
-.message {
+:global(.message) {
   color: var(--accent);
   margin-bottom: 0;
 }
 
-.log {
+:global(.log) {
   border-bottom: 1px solid var(--line);
   padding: 10px 0;
   color: var(--muted);
   font-size: 13px;
 }
 
-.log strong {
+:global(.log strong) {
   display: block;
   color: var(--ink);
 }
 
-pre {
+:global(pre) {
   margin: 0;
   overflow: auto;
   background: #111827;
@@ -346,27 +236,27 @@ pre {
     padding: 18px;
   }
 
-  .metrics,
-  .workspace,
-  .grid-form {
+  :global(.metrics),
+  :global(.workspace),
+  :global(.grid-form) {
     grid-template-columns: 1fr;
   }
 
-  .topbar {
+  :global(.topbar) {
     align-items: flex-start;
   }
 
-  .list-controls,
-  .pagination {
+  :global(.list-controls),
+  :global(.pagination) {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .list-controls input {
+  :global(.list-controls input) {
     max-width: none;
   }
 
-  .key-row {
+  :global(.key-row) {
     grid-template-columns: 1fr;
     align-items: stretch;
   }
