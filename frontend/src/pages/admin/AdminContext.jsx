@@ -33,6 +33,7 @@ export function AdminProvider({ children, onLogout }) {
   const [form, setForm] = useState(emptyForm)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [confirmDialog, setConfirmDialog] = useState(null)
   const [loading, setLoading] = useState(true)
   const [projectSearch, setProjectSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -126,6 +127,15 @@ export function AdminProvider({ children, onLogout }) {
     setError('')
   }
 
+  const clearNotice = useCallback(() => {
+    setMessage('')
+    setError('')
+  }, [])
+
+  const closeConfirmDialog = useCallback(() => {
+    setConfirmDialog(null)
+  }, [])
+
   async function saveProject(event) {
     event.preventDefault()
     setMessage('')
@@ -196,10 +206,25 @@ export function AdminProvider({ children, onLogout }) {
         setMessage(`New API key for ${project.siteId}: ${result.apiKey}`)
       }
       if (action === 'delete') {
-        const confirmed = window.confirm(`Delete ${project.siteId}? This removes the project and its keys.`)
-        if (!confirmed) return
-        await deleteProject(project.siteId)
-        setMessage(`Deleted ${project.siteId}.`)
+        setConfirmDialog({
+          confirmLabel: 'Delete project',
+          copy: 'This removes the project connection and its API keys. This cannot be undone.',
+          onConfirm: async () => {
+            setConfirmDialog((current) => ({ ...current, loading: true }))
+            try {
+              await deleteProject(project.siteId)
+              setMessage(`Deleted ${project.siteId}.`)
+              await refresh()
+              setConfirmDialog(null)
+            } catch (requestError) {
+              setError(requestError.message)
+              setConfirmDialog(null)
+            }
+          },
+          title: `Delete ${project.siteId}?`,
+          tone: 'danger',
+        })
+        return
       }
       await refresh()
     } catch (requestError) {
@@ -303,6 +328,9 @@ export function AdminProvider({ children, onLogout }) {
   const value = {
     browser,
     clearForm,
+    clearNotice,
+    closeConfirmDialog,
+    confirmDialog,
     copyText,
     editProject,
     error,

@@ -1,4 +1,8 @@
+import { useEffect } from 'react'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { ProjectEditDialog } from '../../components/projects/ProjectEditDialog'
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog'
+import { ToastViewport } from '../../components/ui/ToastViewport'
 import { AdminProvider } from './AdminContext'
 import { useAdmin } from './adminContextCore'
 import styles from '../dashboard/Dashboard.module.css'
@@ -20,10 +24,26 @@ export function AdminLayout({ onLogout }) {
 }
 
 function AdminFrame() {
-  const { error, logout, message, refresh } = useAdmin()
+  const admin = useAdmin()
+  const {
+    clearNotice,
+    closeConfirmDialog,
+    confirmDialog,
+    error,
+    logout,
+    message,
+    refresh,
+  } = admin
   const location = useLocation()
   const currentPath = location.pathname.startsWith('/browser/') ? '/browser' : location.pathname
   const [title, copy] = pageMeta[currentPath] || pageMeta['/dashboard']
+
+  useEffect(() => {
+    if (!message && !error) return undefined
+
+    const timeoutId = window.setTimeout(clearNotice, 5200)
+    return () => window.clearTimeout(timeoutId)
+  }, [clearNotice, error, message])
 
   return (
     <main className={styles.shell}>
@@ -51,11 +71,10 @@ function AdminFrame() {
         <NavLink to="/settings">Setup</NavLink>
       </nav>
 
-      {(message || error) && (
-        <div className={error ? styles.alertError : styles.alert}>{error || message}</div>
-      )}
-
       <Outlet />
+      <ProjectEditDialog admin={admin} />
+      <ToastViewport error={error} message={message} onDismiss={clearNotice} />
+      <ConfirmDialog dialog={confirmDialog} onCancel={closeConfirmDialog} />
     </main>
   )
 }
