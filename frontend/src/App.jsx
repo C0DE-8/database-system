@@ -1,20 +1,35 @@
 import { useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { TOKEN_KEY } from './api/client'
-import { AuthRouter } from './routes/AuthRouter'
-import { DashboardRouter } from './routes/DashboardRouter'
+import { Auth } from './pages/auth/Auth'
+import { Dashboard } from './pages/dashboard/Dashboard'
+import { getToken } from './token'
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem(TOKEN_KEY) || '')
+  const [token, setToken] = useState(getToken())
 
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to={token ? '/dashboard' : '/auth'} replace />} />
-        <Route path="/auth" element={<AuthRouter token={token} onLogin={setToken} />} />
+        <Route
+          path="/auth"
+          element={
+            token ? (
+              <Navigate to="/dashboard" replace />
+            ) : (
+              <Auth onLogin={setToken} />
+            )
+          }
+        />
         <Route
           path="/dashboard"
-          element={<DashboardRouter token={token} onLogout={() => setToken('')} />}
+          element={
+            token ? (
+              <Dashboard onLogout={() => setToken('')} />
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

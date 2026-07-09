@@ -9,6 +9,7 @@ import {
   listProjects,
   pingProject,
 } from '../../api/projects'
+import { clearToken } from '../../token'
 import styles from './Dashboard.module.css'
 
 const emptyForm = {
@@ -64,7 +65,7 @@ export function Dashboard({ onLogout }) {
     } catch (requestError) {
       setError(requestError.message)
       if (requestError.message.toLowerCase().includes('token')) {
-        localStorage.removeItem('dbmsToken')
+        clearToken()
         onLogout()
       }
     } finally {
@@ -87,7 +88,7 @@ export function Dashboard({ onLogout }) {
   }, [refresh])
 
   function logout() {
-    localStorage.removeItem('dbmsToken')
+    clearToken()
     onLogout()
   }
 

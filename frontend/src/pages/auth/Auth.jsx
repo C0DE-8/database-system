@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { login } from '../../api/auth'
 import { API_BASE_URL } from '../../api/client'
+import { setToken } from '../../token'
 import styles from './Auth.module.css'
 
 export function Auth({ onLogin }) {
@@ -18,7 +19,7 @@ export function Auth({ onLogin }) {
 
     try {
       const result = await login(form)
-      localStorage.setItem('dbmsToken', result.token)
+      setToken(result.token)
       onLogin(result.token)
     } catch (requestError) {
       setError(requestError.message)
