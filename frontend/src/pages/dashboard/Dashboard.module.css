@@ -21,6 +21,12 @@
   margin-bottom: 24px;
 }
 
+.headerCopy {
+  max-width: 620px;
+  margin: 10px 0 0;
+  color: #b7c5d8;
+}
+
 .headerActions,
 .actions {
   flex-wrap: wrap;
@@ -41,6 +47,44 @@
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 18px;
+}
+
+.commandBar {
+  display: grid;
+  grid-template-columns: 1.5fr 0.75fr 0.75fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.commandBar div {
+  min-width: 0;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 16px;
+  padding: 14px;
+  background: rgb(8 17 31 / 36%);
+  backdrop-filter: blur(18px);
+}
+
+.commandBar span,
+.commandBar strong {
+  display: block;
+}
+
+.commandBar span {
+  margin-bottom: 4px;
+  color: #8ea1b9;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.commandBar strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #f8fbff;
+  font-size: 13px;
 }
 
 .metric,
@@ -82,11 +126,11 @@
   color: #b7c5d8;
 }
 
-.grid {
+.workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.38fr);
   gap: 16px;
-  margin-bottom: 16px;
+  align-items: start;
 }
 
 .panel {
@@ -94,15 +138,66 @@
   padding: 20px;
 }
 
+.panelHead h2,
+.panelHead p {
+  margin-bottom: 0;
+}
+
+.panelActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sideRail {
+  display: grid;
+  gap: 16px;
+  position: sticky;
+  top: 18px;
+  min-width: 0;
+}
+
+.projectControls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.filterChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.chip,
+.activeChip {
+  min-height: 34px;
+  border-radius: 999px;
+  padding: 0 12px;
+  background: rgb(255 255 255 / 8%);
+  box-shadow: none;
+  color: #cbd5e1;
+  text-transform: capitalize;
+}
+
+.activeChip {
+  background: rgb(45 212 191 / 22%);
+  color: #99f6e4;
+  border-color: rgb(45 212 191 / 34%);
+}
+
 .projectList,
-.logs,
 .form {
   display: grid;
   gap: 12px;
 }
 
 .projectList {
-  max-height: 620px;
+  max-height: calc(100vh - 330px);
+  min-height: 360px;
   overflow: auto;
   padding-right: 2px;
 }
@@ -126,6 +221,80 @@
 .projectTop span {
   color: #8ea1b9;
   font-size: 13px;
+}
+
+.projectPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.projectPills span {
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: rgb(255 255 255 / 5%);
+  color: #cbd5e1;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: 0;
+}
+
+.statsGrid div {
+  border-radius: 12px;
+  padding: 10px;
+  background: rgb(15 23 42 / 48%);
+}
+
+.statsGrid dt,
+.statsGrid dd {
+  margin: 0;
+}
+
+.statsGrid dt {
+  color: #8ea1b9;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.statsGrid dd {
+  margin-top: 3px;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.details {
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 12px;
+  background: rgb(255 255 255 / 4%);
+}
+
+.details summary {
+  cursor: pointer;
+  padding: 11px 12px;
+  color: #eaf2ff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.details[open] {
+  padding-bottom: 12px;
+}
+
+.details .infoGrid,
+.details .keyList {
+  padding: 0 12px;
 }
 
 .infoGrid {
@@ -277,20 +446,101 @@
   background: rgb(239 68 68 / 14%);
 }
 
+.logsPanel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  max-height: 420px;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.logsHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding-bottom: 14px;
+  background: linear-gradient(180deg, rgb(22 36 55 / 94%), rgb(22 36 55 / 72%));
+  backdrop-filter: blur(18px);
+}
+
+.logsHeader h2 {
+  margin-bottom: 4px;
+}
+
+.logTools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  color: #8ea1b9;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.logs {
+  display: grid;
+  gap: 10px;
+  max-height: 310px;
+  overflow: auto;
+  padding: 0 4px 18px 0;
+  scrollbar-gutter: stable;
+}
+
 .log {
-  border-bottom: 1px solid rgb(255 255 255 / 12%);
-  padding-bottom: 10px;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgb(8 17 31 / 34%);
   color: #b7c5d8;
 }
 
 .log strong {
   display: block;
   color: #fff;
+  text-transform: capitalize;
 }
 
 .log span {
   color: #8ea1b9;
   font-size: 12px;
+}
+
+.log p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.logMeta {
+  display: grid;
+  gap: 4px;
+}
+
+.emptyLogs {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  border: 1px dashed rgb(255 255 255 / 16%);
+  border-radius: 14px;
+  color: #8ea1b9;
+  text-align: center;
+}
+
+.emptyLogs strong,
+.emptyLogs span {
+  display: block;
+}
+
+.emptyLogs strong {
+  color: #fff;
 }
 
 @media (max-width: 900px) {
@@ -304,16 +554,63 @@
     align-items: flex-start;
   }
 
+  .header {
+    display: grid;
+  }
+
+  .headerActions button {
+    flex: 1 1 auto;
+  }
+
+  .commandBar,
+  .projectControls,
   .header,
   .metrics,
-  .grid,
+  .workspace,
   .form,
   .infoGrid,
-  .keyRow {
+  .keyRow,
+  .statsGrid {
     grid-template-columns: 1fr;
+  }
+
+  .sideRail {
+    position: static;
+  }
+
+  .filterChips {
+    justify-content: flex-start;
+  }
+
+  .chip,
+  .activeChip {
+    flex: 1 1 calc(50% - 8px);
+  }
+
+  .projectList {
+    max-height: none;
+    min-height: 0;
+    overflow: visible;
+    padding-right: 0;
   }
 
   .keyActions {
     justify-content: flex-start;
+  }
+
+  .logsPanel {
+    max-height: 420px;
+  }
+
+  .logsHeader {
+    flex-direction: column;
+  }
+
+  .logTools {
+    justify-content: flex-start;
+  }
+
+  .log {
+    grid-template-columns: 1fr;
   }
 }

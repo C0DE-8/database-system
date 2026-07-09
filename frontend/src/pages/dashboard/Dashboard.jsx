@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { io } from 'socket.io-client'
-import { API_ORIGIN } from '../../api/client'
+import { API_BASE_URL, API_ORIGIN } from '../../api/client'
 import { getLogs, getStatus, getSummary, pingAllProjects } from '../../api/monitor'
 import {
   createProject,
@@ -43,6 +43,9 @@ export function Dashboard({ onLogout }) {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [projectSearch, setProjectSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [lastSyncedAt, setLastSyncedAt] = useState('')
 
   const mergedProjects = useMemo(() => {
     return projects.map((project) => {
@@ -53,6 +56,29 @@ export function Dashboard({ onLogout }) {
       }
     })
   }, [projects, statusRows])
+
+  const filteredProjects = useMemo(() => {
+    const query = projectSearch.trim().toLowerCase()
+
+    return mergedProjects.filter((project) => {
+      const status = project.connection?.status || 'unknown'
+      const credentials = project.credentials || {}
+      const matchesStatus = statusFilter === 'all' || status === statusFilter
+      const matchesSearch = !query || [
+        project.name,
+        project.siteId,
+        project.enabled ? 'enabled' : 'disabled',
+        status,
+        credentials.database,
+        credentials.host,
+        credentials.user,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query))
+
+      return matchesStatus && matchesSearch
+    })
+  }, [mergedProjects, projectSearch, statusFilter])
 
   const refresh = useCallback(async () => {
     try {
@@ -66,6 +92,7 @@ export function Dashboard({ onLogout }) {
       setProjects(nextProjects)
       setStatusRows(nextStatus)
       setLogs(nextLogs)
+      setLastSyncedAt(new Date().toLocaleTimeString())
       setError('')
     } catch (requestError) {
       setError(requestError.message)
@@ -233,6 +260,9 @@ export function Dashboard({ onLogout }) {
         <div>
           <p className={styles.eyebrow}>DBMS Gateway</p>
           <h1>Connection Management</h1>
+          <p className={styles.headerCopy}>
+            Manage projects, database credentials, API keys, and gateway health from one place.
+          </p>
         </div>
         <div className={styles.headerActions}>
           <button type="button" className={styles.secondary} onClick={refresh}>
@@ -256,20 +286,65 @@ export function Dashboard({ onLogout }) {
         <div className={error ? styles.alertError : styles.alert}>{error || message}</div>
       )}
 
-      <section className={styles.grid}>
+      <section className={styles.commandBar}>
+        <div>
+          <span>API</span>
+          <strong>{API_BASE_URL}</strong>
+        </div>
+        <div>
+          <span>Last sync</span>
+          <strong>{lastSyncedAt || 'Waiting...'}</strong>
+        </div>
+        <div>
+          <span>Visible projects</span>
+          <strong>{filteredProjects.length} of {mergedProjects.length}</strong>
+        </div>
+      </section>
+
+      <section className={styles.workspace}>
         <section className={styles.panel}>
           <div className={styles.panelHead}>
-            <h2>Projects</h2>
-            <button type="button" className={styles.secondary} onClick={pingAll}>
-              Ping all
-            </button>
+            <div>
+              <h2>Projects</h2>
+              <p className={styles.muted}>Search, inspect, and manage every project connection.</p>
+            </div>
+            <div className={styles.panelActions}>
+              <button type="button" className={styles.secondary} onClick={pingAll}>
+                Ping all
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.projectControls}>
+            <input
+              value={projectSearch}
+              onChange={(event) => setProjectSearch(event.target.value)}
+              placeholder="Search by project, site ID, database, host, user, or status"
+            />
+            <div className={styles.filterChips} aria-label="Project status filter">
+              {['all', 'online', 'offline', 'unknown'].map((status) => (
+                <button
+                  type="button"
+                  className={statusFilter === status ? styles.activeChip : styles.chip}
+                  onClick={() => setStatusFilter(status)}
+                  key={status}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
           </div>
 
           {loading && <p className={styles.muted}>Loading projects...</p>}
-          {!loading && !mergedProjects.length && <p className={styles.muted}>No projects yet.</p>}
+          {!loading && !filteredProjects.length && (
+            <div className={styles.emptyState}>
+              <strong>No matching projects</strong>
+              <span>Adjust the search or status filter, or add a new project.</span>
+            </div>
+          )}
 
           <div className={styles.projectList}>
-            {mergedProjects.map((project) => (
+            {filteredProjects.map((project) => (
               <article className={styles.project} key={project.siteId}>
                 <div className={styles.projectTop}>
                   <div>
@@ -281,7 +356,30 @@ export function Dashboard({ onLogout }) {
                   <StatusBadge status={project.connection?.status || 'unknown'} />
                 </div>
 
-                <dl className={styles.infoGrid}>
+                <div className={styles.projectPills}>
+                  <span>{project.credentials?.database || 'No database'}</span>
+                  <span>{project.credentials?.host || 'localhost'}:{project.credentials?.port || 3306}</span>
+                  <span>{project.credentials?.user || 'root'}</span>
+                </div>
+
+                <dl className={styles.statsGrid}>
+                  <div>
+                    <dt>Total</dt>
+                    <dd>{project.connection?.totalQueries || 0}</dd>
+                  </div>
+                  <div>
+                    <dt>Active</dt>
+                    <dd>{project.connection?.activeQueries || 0}</dd>
+                  </div>
+                  <div>
+                    <dt>Failed</dt>
+                    <dd>{project.connection?.failedQueries || 0}</dd>
+                  </div>
+                </dl>
+
+                <details className={styles.details}>
+                  <summary>Connection details</summary>
+                  <dl className={styles.infoGrid}>
                   <div>
                     <dt>Database</dt>
                     <dd>{project.credentials?.database || 'not set'}</dd>
@@ -309,9 +407,12 @@ export function Dashboard({ onLogout }) {
                     <dt>Updated</dt>
                     <dd>{formatDate(project.updatedAt)}</dd>
                   </div>
-                </dl>
+                  </dl>
+                </details>
 
-                <dl className={styles.infoGrid}>
+                <details className={styles.details}>
+                  <summary>Query status</summary>
+                  <dl className={styles.infoGrid}>
                   <div>
                     <dt>Total queries</dt>
                     <dd>{project.connection?.totalQueries || 0}</dd>
@@ -328,10 +429,12 @@ export function Dashboard({ onLogout }) {
                     <dt>Last error</dt>
                     <dd>{project.connection?.lastError || 'None'}</dd>
                   </div>
-                </dl>
+                  </dl>
+                </details>
 
-                <div className={styles.keyList}>
-                  <div className={styles.sectionTitle}>API Keys</div>
+                <details className={styles.details}>
+                  <summary>API Keys ({project.apiKeys?.length || 0})</summary>
+                  <div className={styles.keyList}>
                   {!project.apiKeys?.length && <p className={styles.muted}>No API keys.</p>}
                   {project.apiKeys?.map((key) => (
                     <div className={styles.keyRow} key={key.id}>
@@ -352,7 +455,8 @@ export function Dashboard({ onLogout }) {
                       </div>
                     </div>
                   ))}
-                </div>
+                  </div>
+                </details>
 
                 {project.connection?.lastError && (
                   <p className={styles.errorText}>{project.connection.lastError}</p>
@@ -379,6 +483,7 @@ export function Dashboard({ onLogout }) {
           </div>
         </section>
 
+        <aside className={styles.sideRail}>
         <section className={styles.panel}>
           <div className={styles.panelHead}>
             <h2>{form.editingSiteId ? `Edit ${form.editingSiteId}` : 'Add Project'}</h2>
@@ -432,20 +537,40 @@ export function Dashboard({ onLogout }) {
             <button type="submit">{form.editingSiteId ? 'Update project' : 'Save project'}</button>
           </form>
         </section>
-      </section>
 
-      <section className={styles.panel}>
-        <h2>Activity Logs</h2>
-        <div className={styles.logs}>
-          {!logs.length && <p className={styles.muted}>No logs yet.</p>}
-          {logs.map((log) => (
-            <article className={styles.log} key={log.id}>
-              <strong>{log.type}</strong>
-              <span>{new Date(log.createdAt).toLocaleString()}</span>
-              <p>{log.message}</p>
-            </article>
-          ))}
-        </div>
+        <section className={`${styles.panel} ${styles.logsPanel}`}>
+          <div className={styles.logsHeader}>
+            <div>
+              <h2>Activity Logs</h2>
+              <p className={styles.muted}>Latest gateway events and admin actions</p>
+            </div>
+            <div className={styles.logTools}>
+              <span>{logs.length} shown</span>
+              <button type="button" className={styles.secondary} onClick={refresh}>
+                Reload
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.logs} role="log" aria-label="Activity logs">
+            {!logs.length && (
+              <div className={styles.emptyLogs}>
+                <strong>No logs yet</strong>
+                <span>New gateway activity will appear here.</span>
+              </div>
+            )}
+            {logs.map((log) => (
+              <article className={styles.log} key={log.id}>
+                <div className={styles.logMeta}>
+                  <strong>{log.type}</strong>
+                  <span>{formatDate(log.createdAt)}</span>
+                </div>
+                <p>{log.message}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+        </aside>
       </section>
     </main>
   )
