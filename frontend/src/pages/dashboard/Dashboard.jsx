@@ -5,9 +5,12 @@ import { getLogs, getStatus, getSummary, pingAllProjects } from '../../api/monit
 import {
   createProject,
   deleteProject,
+  deleteProjectApiKey,
   generateProjectApiKey,
+  getProject,
   listProjects,
   pingProject,
+  updateProject,
 } from '../../api/projects'
 import { clearToken } from '../../token'
 import styles from './Dashboard.module.css'
@@ -21,6 +24,8 @@ const emptyForm = {
   user: 'root',
   password: '',
   connectionLimit: '10',
+  queueLimit: '0',
+  enabled: true,
 }
 
 export function Dashboard({ onLogout }) {
@@ -98,10 +103,10 @@ export function Dashboard({ onLogout }) {
     setError('')
 
     try {
-      const result = await createProject({
+      const payload = {
         name: form.name,
         siteId: form.siteId,
-        enabled: true,
+        enabled: form.enabled,
         credentials: {
           host: form.host,
           port: Number(form.port || 3306),
@@ -109,14 +114,52 @@ export function Dashboard({ onLogout }) {
           user: form.user,
           password: form.password,
           connectionLimit: Number(form.connectionLimit || 10),
+          queueLimit: Number(form.queueLimit || 0),
         },
-      })
+      }
+
+      const result = form.editingSiteId
+        ? await updateProject(form.editingSiteId, payload)
+        : await createProject(payload)
+
       setForm(emptyForm)
-      setMessage(`Project saved.${result.apiKey ? ` API key: ${result.apiKey}` : ''}`)
+      setMessage(`Project saved.${result?.apiKey ? ` API key: ${result.apiKey}` : ''}`)
       await refresh()
     } catch (requestError) {
       setError(requestError.message)
     }
+  }
+
+  async function editProject(project) {
+    setMessage('')
+    setError('')
+
+    try {
+      const fullProject = await getProject(project.siteId)
+      const credentials = fullProject.credentials || {}
+      setForm({
+        editingSiteId: fullProject.siteId,
+        name: fullProject.name || '',
+        siteId: fullProject.siteId || '',
+        host: credentials.host || 'localhost',
+        port: String(credentials.port || 3306),
+        database: credentials.database || '',
+        user: credentials.user || 'root',
+        password: credentials.password || '',
+        connectionLimit: String(credentials.connectionLimit || 10),
+        queueLimit: String(credentials.queueLimit || 0),
+        enabled: fullProject.enabled,
+      })
+      setMessage(`Editing ${fullProject.siteId}.`)
+    } catch (requestError) {
+      setError(requestError.message)
+    }
+  }
+
+  function clearForm() {
+    setForm(emptyForm)
+    setMessage('')
+    setError('')
   }
 
   async function runProjectAction(action, project) {
@@ -135,6 +178,8 @@ export function Dashboard({ onLogout }) {
       }
 
       if (action === 'delete') {
+        const confirmed = window.confirm(`Delete ${project.siteId}? This removes the project and its keys.`)
+        if (!confirmed) return
         await deleteProject(project.siteId)
         setMessage(`Deleted ${project.siteId}.`)
       }
@@ -149,6 +194,33 @@ export function Dashboard({ onLogout }) {
     try {
       await pingAllProjects()
       setMessage('Pinged all projects.')
+      await refresh()
+    } catch (requestError) {
+      setError(requestError.message)
+    }
+  }
+
+  async function copyText(value, label) {
+    if (!value) {
+      setMessage(`${label} is not available.`)
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(value)
+      setMessage(`${label} copied.`)
+    } catch {
+      setMessage(`${label}: ${value}`)
+    }
+  }
+
+  async function removeApiKey(project, key) {
+    setMessage('')
+    setError('')
+
+    try {
+      await deleteProjectApiKey(project.siteId, key.id)
+      setMessage(`Deleted API key ${key.prefix} from ${project.siteId}.`)
       await refresh()
     } catch (requestError) {
       setError(requestError.message)
@@ -176,6 +248,7 @@ export function Dashboard({ onLogout }) {
         <Metric label="Projects" value={summary.projects} />
         <Metric label="Online" value={summary.online} />
         <Metric label="Offline" value={summary.offline} />
+        <Metric label="Active Queries" value={summary.activeQueries} />
         <Metric label="Total Queries" value={summary.totalQueries} />
       </section>
 
@@ -201,22 +274,96 @@ export function Dashboard({ onLogout }) {
                 <div className={styles.projectTop}>
                   <div>
                     <strong>{project.name}</strong>
-                    <span>{project.siteId}</span>
+                    <span>
+                      {project.siteId} · {project.enabled ? 'Enabled' : 'Disabled'}
+                    </span>
                   </div>
                   <StatusBadge status={project.connection?.status || 'unknown'} />
                 </div>
-                <p className={styles.muted}>
-                  {project.credentials?.user || 'root'}@{project.credentials?.host || 'localhost'}:
-                  {project.credentials?.port || 3306}/{project.credentials?.database || 'not set'}
-                </p>
-                <p className={styles.muted}>
-                  Queries: {project.connection?.totalQueries || 0} total,{' '}
-                  {project.connection?.activeQueries || 0} active
-                </p>
+
+                <dl className={styles.infoGrid}>
+                  <div>
+                    <dt>Database</dt>
+                    <dd>{project.credentials?.database || 'not set'}</dd>
+                  </div>
+                  <div>
+                    <dt>Host</dt>
+                    <dd>{project.credentials?.host || 'localhost'}:{project.credentials?.port || 3306}</dd>
+                  </div>
+                  <div>
+                    <dt>User</dt>
+                    <dd>{project.credentials?.user || 'root'}</dd>
+                  </div>
+                  <div>
+                    <dt>Pool</dt>
+                    <dd>
+                      {project.credentials?.connectionLimit || 10} connections · queue{' '}
+                      {project.credentials?.queueLimit || 0}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Created</dt>
+                    <dd>{formatDate(project.createdAt)}</dd>
+                  </div>
+                  <div>
+                    <dt>Updated</dt>
+                    <dd>{formatDate(project.updatedAt)}</dd>
+                  </div>
+                </dl>
+
+                <dl className={styles.infoGrid}>
+                  <div>
+                    <dt>Total queries</dt>
+                    <dd>{project.connection?.totalQueries || 0}</dd>
+                  </div>
+                  <div>
+                    <dt>Active</dt>
+                    <dd>{project.connection?.activeQueries || 0}</dd>
+                  </div>
+                  <div>
+                    <dt>Failed</dt>
+                    <dd>{project.connection?.failedQueries || 0}</dd>
+                  </div>
+                  <div>
+                    <dt>Last error</dt>
+                    <dd>{project.connection?.lastError || 'None'}</dd>
+                  </div>
+                </dl>
+
+                <div className={styles.keyList}>
+                  <div className={styles.sectionTitle}>API Keys</div>
+                  {!project.apiKeys?.length && <p className={styles.muted}>No API keys.</p>}
+                  {project.apiKeys?.map((key) => (
+                    <div className={styles.keyRow} key={key.id}>
+                      <div>
+                        <strong>{key.name || 'API key'}</strong>
+                        <span>
+                          {key.prefix} · {key.revokedAt ? 'Revoked' : 'Active'} · created{' '}
+                          {formatDate(key.createdAt)}
+                        </span>
+                      </div>
+                      <div className={styles.keyActions}>
+                        <button type="button" className={styles.secondary} onClick={() => copyText(key.apiKey || key.prefix, 'API key')}>
+                          Copy
+                        </button>
+                        <button type="button" className={styles.danger} onClick={() => removeApiKey(project, key)}>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
                 {project.connection?.lastError && (
                   <p className={styles.errorText}>{project.connection.lastError}</p>
                 )}
                 <div className={styles.actions}>
+                  <button type="button" className={styles.secondary} onClick={() => editProject(project)}>
+                    Edit
+                  </button>
+                  <button type="button" className={styles.secondary} onClick={() => copyText(project.siteId, 'Site ID')}>
+                    Copy ID
+                  </button>
                   <button type="button" className={styles.secondary} onClick={() => runProjectAction('ping', project)}>
                     Ping
                   </button>
@@ -233,17 +380,56 @@ export function Dashboard({ onLogout }) {
         </section>
 
         <section className={styles.panel}>
-          <h2>Add Project</h2>
+          <div className={styles.panelHead}>
+            <h2>{form.editingSiteId ? `Edit ${form.editingSiteId}` : 'Add Project'}</h2>
+            {form.editingSiteId && (
+              <button type="button" className={styles.secondary} onClick={clearForm}>
+                Cancel
+              </button>
+            )}
+          </div>
           <form className={styles.form} onSubmit={handleCreateProject}>
-            <input placeholder="Project name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
-            <input placeholder="Site ID" value={form.siteId} onChange={(event) => setForm({ ...form, siteId: event.target.value })} required />
-            <input placeholder="Host" value={form.host} onChange={(event) => setForm({ ...form, host: event.target.value })} />
-            <input placeholder="Port" type="number" value={form.port} onChange={(event) => setForm({ ...form, port: event.target.value })} />
-            <input placeholder="Database" value={form.database} onChange={(event) => setForm({ ...form, database: event.target.value })} required />
-            <input placeholder="User" value={form.user} onChange={(event) => setForm({ ...form, user: event.target.value })} />
-            <input placeholder="Password" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
-            <input placeholder="Pool size" type="number" value={form.connectionLimit} onChange={(event) => setForm({ ...form, connectionLimit: event.target.value })} />
-            <button type="submit">Save project</button>
+            <label>
+              Project name
+              <input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
+            </label>
+            <label>
+              Site ID
+              <input value={form.siteId} onChange={(event) => setForm({ ...form, siteId: event.target.value })} disabled={Boolean(form.editingSiteId)} required />
+            </label>
+            <label>
+              Host
+              <input value={form.host} onChange={(event) => setForm({ ...form, host: event.target.value })} />
+            </label>
+            <label>
+              Port
+              <input type="number" value={form.port} onChange={(event) => setForm({ ...form, port: event.target.value })} />
+            </label>
+            <label>
+              Database
+              <input value={form.database} onChange={(event) => setForm({ ...form, database: event.target.value })} required />
+            </label>
+            <label>
+              User
+              <input value={form.user} onChange={(event) => setForm({ ...form, user: event.target.value })} />
+            </label>
+            <label>
+              Password
+              <input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
+            </label>
+            <label>
+              Pool size
+              <input type="number" value={form.connectionLimit} onChange={(event) => setForm({ ...form, connectionLimit: event.target.value })} />
+            </label>
+            <label>
+              Queue limit
+              <input type="number" value={form.queueLimit} onChange={(event) => setForm({ ...form, queueLimit: event.target.value })} />
+            </label>
+            <label className={styles.checkbox}>
+              <input type="checkbox" checked={form.enabled} onChange={(event) => setForm({ ...form, enabled: event.target.checked })} />
+              Enabled
+            </label>
+            <button type="submit">{form.editingSiteId ? 'Update project' : 'Save project'}</button>
           </form>
         </section>
       </section>
@@ -276,4 +462,9 @@ function Metric({ label, value }) {
 
 function StatusBadge({ status }) {
   return <span className={`${styles.status} ${styles[status] || ''}`}>{status}</span>
+}
+
+function formatDate(value) {
+  if (!value) return 'Not available'
+  return new Date(value).toLocaleString()
 }
