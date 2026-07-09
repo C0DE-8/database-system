@@ -1,0 +1,55 @@
+Update this project to use my DBMS Gateway. Do not assume this project can see my original `test/shop-backend` folder.
+
+Goal:
+- Do not store MySQL host/user/password in this app.
+- Store real MySQL credentials only in the DBMS Gateway project.
+- This app should only use `SITE_ID`, full `API_KEY`, and `DBMS_URL`.
+
+Use this pattern:
+- Copy or install the `diamond-sql` connector.
+- If no package exists, create a small local `diamond-sql.js` connector that sends requests to the DBMS Gateway with headers `x-site-id` and `x-api-key`.
+- Create one shared db file:
+
+const { connectProject } = require("./diamond-sql");
+
+const db = connectProject(process.env.SITE_ID, {
+  apiKey: process.env.API_KEY,
+  dbmsUrl: process.env.DBMS_URL,
+  timeoutMs: process.env.DBMS_TIMEOUT_MS || 15000
+});
+
+module.exports = db;
+
+The connector must expose:
+- `db.query(sql, params)` -> POST `${DBMS_URL}/gateway/query` with `{ sql, params }`, return `payload.rows || []`.
+- `db.execute(sql, params)` -> same as query.
+- `db.status()` -> GET `${DBMS_URL}/gateway/status`.
+
+Every gateway request must send:
+- `Content-Type: application/json`
+- `x-site-id: SITE_ID`
+- `x-api-key: API_KEY`
+
+Env needed:
+SITE_ID=your_project_site_id
+API_KEY=full_dbms_api_key_not_the_short_prefix
+DBMS_URL=https://api.dbms.copupbid.com/api
+DBMS_TIMEOUT_MS=15000
+
+Then replace direct MySQL pool/connection usage with:
+
+const db = require("./db");
+const rows = await db.query("SELECT * FROM table_name WHERE id = ?", [id]);
+
+Also add or update a health route:
+
+app.get("/health", async (req, res) => {
+  try {
+    const status = await db.status();
+    res.json({ ok: true, gateway: status });
+  } catch (error) {
+    res.status(503).json({ ok: false, error: error.message });
+  }
+});
+
+Before coding, inspect this app and find its current database connection file, routes, services, and models. Keep the same API behavior, only move database access through the DBMS Gateway.
