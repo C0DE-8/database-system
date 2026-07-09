@@ -1,8 +1,9 @@
 .shell {
+  position: relative;
   min-height: 100vh;
-  max-width: 1280px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 32px;
+  padding: 34px;
 }
 
 .header,
@@ -27,53 +28,70 @@
 }
 
 .eyebrow {
-  margin: 0 0 4px;
-  color: #0f766e;
+  margin: 0 0 6px;
+  color: #5eead4;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 18px;
 }
 
 .metric,
 .panel,
 .project {
-  background: #fff;
-  border: 1px solid #d9e0ea;
-  border-radius: 8px;
+  background: linear-gradient(145deg, rgb(255 255 255 / 14%), rgb(255 255 255 / 7%));
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 16px;
+  box-shadow: 0 22px 70px rgb(0 0 0 / 20%);
+  backdrop-filter: blur(18px);
 }
 
 .metric {
-  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+}
+
+.metric::after {
+  content: "";
+  position: absolute;
+  right: -28px;
+  top: -28px;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: rgb(45 212 191 / 16%);
 }
 
 .metric strong {
   display: block;
-  color: #172033;
-  font-size: 30px;
+  color: #fff;
+  font-size: 32px;
+  line-height: 1;
 }
 
 .metric span,
 .muted {
-  color: #667085;
+  color: #b7c5d8;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.7fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
   gap: 16px;
   margin-bottom: 16px;
 }
 
 .panel {
   min-width: 0;
-  padding: 18px;
+  padding: 20px;
 }
 
 .projectList,
@@ -86,12 +104,14 @@
 .projectList {
   max-height: 620px;
   overflow: auto;
+  padding-right: 2px;
 }
 
 .project {
   display: grid;
-  gap: 10px;
-  padding: 14px;
+  gap: 11px;
+  padding: 15px;
+  background: rgb(8 17 31 / 36%);
 }
 
 .projectTop strong,
@@ -99,28 +119,33 @@
   display: block;
 }
 
+.projectTop strong {
+  color: #fff;
+}
+
 .projectTop span {
-  color: #667085;
+  color: #8ea1b9;
   font-size: 13px;
 }
 
 .status {
   border-radius: 999px;
-  padding: 4px 9px;
-  background: #f2f4f7;
-  color: #667085;
+  padding: 5px 10px;
+  background: rgb(148 163 184 / 18%);
+  color: #cbd5e1;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
+  text-transform: capitalize;
 }
 
 .online {
-  background: #dcfae6;
-  color: #047857;
+  background: rgb(16 185 129 / 18%);
+  color: #86efac;
 }
 
 .offline {
-  background: #fef0c7;
-  color: #b45309;
+  background: rgb(245 158 11 / 18%);
+  color: #fde68a;
 }
 
 .form {
@@ -132,45 +157,50 @@
 }
 
 .secondary {
-  background: #eef3f7;
-  color: #172033;
+  background: rgb(255 255 255 / 10%);
+  color: #eaf2ff;
+  box-shadow: none;
 }
 
 .danger {
-  background: #b42318;
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  box-shadow: 0 12px 28px rgb(239 68 68 / 18%);
 }
 
 .alert,
 .alertError {
   margin-bottom: 16px;
-  border-radius: 8px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 14px;
   padding: 12px 14px;
-  background: #ecfdf3;
-  color: #047857;
-  font-weight: 700;
+  background: rgb(20 184 166 / 16%);
+  color: #99f6e4;
+  font-weight: 800;
+  backdrop-filter: blur(16px);
 }
 
 .alertError,
 .errorText {
-  color: #b42318;
+  color: #fecaca;
 }
 
 .alertError {
-  background: #fef3f2;
+  background: rgb(239 68 68 / 14%);
 }
 
 .log {
-  border-bottom: 1px solid #d9e0ea;
+  border-bottom: 1px solid rgb(255 255 255 / 12%);
   padding-bottom: 10px;
-  color: #667085;
+  color: #b7c5d8;
 }
 
 .log strong {
   display: block;
-  color: #172033;
+  color: #fff;
 }
 
 .log span {
+  color: #8ea1b9;
   font-size: 12px;
 }
 

@@ -12,7 +12,8 @@ const encryptionSecret = requiredSecret("ENCRYPTION_KEY", "dev-only-encryption-k
 const defaultCorsOrigins = [
   "http://localhost:5173",
   "http://localhost:5174",
-  "https://database-system-five.vercel.app"
+  "https://database-system-five.vercel.app",
+  "https://database-system-dbms.vercel.app"
 ];
 
 const corsOrigins = (process.env.CORS_ORIGIN || defaultCorsOrigins.join(","))
@@ -40,7 +41,8 @@ const config = {
 function isAllowedOrigin(origin) {
   if (!origin) return true;
   if (config.corsOrigins.includes("*")) return true;
-  return config.corsOrigins.includes(origin);
+  if (config.corsOrigins.includes(origin)) return true;
+  return /^https:\/\/database-system-dbms(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(origin);
 }
 
 module.exports = { config, isAllowedOrigin };

@@ -3,45 +3,56 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: #f5f7fb;
 }
 
 .panel {
-  width: min(440px, 100%);
-  padding: 30px;
-  background: #fff;
-  border: 1px solid #d9e0ea;
-  border-radius: 8px;
-  box-shadow: 0 18px 60px rgb(23 32 51 / 10%);
+  position: relative;
+  width: min(460px, 100%);
+  overflow: hidden;
+  padding: 34px;
+  background: linear-gradient(145deg, rgb(255 255 255 / 16%), rgb(255 255 255 / 7%));
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 18px;
+  box-shadow: 0 24px 90px rgb(0 0 0 / 34%);
+  backdrop-filter: blur(22px);
+}
+
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 70%), transparent);
 }
 
 .eyebrow {
-  margin: 0 0 6px;
-  color: #0f766e;
+  margin: 0 0 8px;
+  color: #5eead4;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 900;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .copy {
-  margin: 10px 0 22px;
-  color: #667085;
+  margin: 12px 0 24px;
+  color: #b7c5d8;
 }
 
 .form {
   display: grid;
-  gap: 14px;
+  gap: 15px;
 }
 
 .error {
   margin: 0;
-  color: #b42318;
-  font-weight: 700;
+  color: #fecaca;
+  font-weight: 800;
 }
 
 .endpoint {
-  margin: 20px 0 0;
-  color: #667085;
+  margin: 22px 0 0;
+  color: #8ea1b9;
   font-size: 12px;
   word-break: break-all;
 }
